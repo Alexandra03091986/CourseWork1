@@ -1,6 +1,14 @@
 import json
-from datetime import datetime
+import os
 import pandas as pd
+
+import requests
+from datetime import datetime
+from dotenv import load_dotenv
+from config import USER_SETTINGS, PATH_XLSX
+
+# Загружаем переменные из .env
+load_dotenv()
 
 
 def get_greetings() -> str:
@@ -16,8 +24,9 @@ def get_greetings() -> str:
     else:
         return "Доброй ночи"
 
-def get_cards(path='../data/operations.xlsx'):
-    """ По каждой карте:vпоследние 4 цифры карты; общая сумма расходов; кешбэк (1 рубль на каждые 100 рублей)."""
+
+def get_cards(path=PATH_XLSX):
+    """ По каждой карте: последние 4 цифры карты; общая сумма расходов; кешбэк (1 рубль на каждые 100 рублей)."""
     df = pd.read_excel(path)
     filter_df = df[df["Сумма операции"] < 0]
     sum_group = filter_df.groupby("Номер карты")["Сумма операции"].sum()
@@ -28,7 +37,7 @@ def get_cards(path='../data/operations.xlsx'):
     return result
 
 
-def get_top_five_max_prices(path='../data/operations.xlsx'):
+def get_top_five_max_prices(path=PATH_XLSX):
     """ Топ-5 транзакций по сумме платежа. """
     df = pd.read_excel(path)
     top_five = df.sort_values("Сумма платежа").head()
@@ -46,7 +55,63 @@ def get_top_five_max_prices(path='../data/operations.xlsx'):
                             # json.dumps(top_result, indent=4, ensure_ascii=False)
 
 
+def get_user_settings() -> dict:
+    """ Функция чтения пользовательских настроек."""
+    with open(USER_SETTINGS, "r", encoding="utf-8") as file:
+        settings = json.load(file)
+        return settings
+
+
+def get_api_currency(currency):
+    """Функция возвращает текущий курс валюты по API"""
+    rate = "RUB"
+    url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={rate}&base={currency}"
+
+    headers = {"apikey": os.getenv("API_KEY_FOR_CURRENCY")}
+    response = requests.get(url, headers=headers, data={})
+    data = response.json()
+    rates = data["rates"]["RUB"]
+    return rates
+
+
+def get_api_stocks(stocks):
+    """Функция возвращает текущий курс акции по API"""
+    api_key = os.getenv("API_KEY_FOR_STOCKS")
+    url = f"https://api.twelvedata.com/price?symbol={stocks}&apikey={api_key}&source=docs"
+    response = requests.get(url)
+    data = response.json()
+    return data
+
+
+def user_currency_rates():
+    """ Функция возвращает курс валют."""
+    user_settings = get_user_settings()
+    user_currencies = user_settings["user_currencies"]
+    currency_rates = []        # валюта в реальном времени
+    for currency in user_currencies:
+        rates = get_api_currency(currency)
+        currency_rates.append({"currency": currency, "rate": round(rates, 2)})
+    return currency_rates
+
+
+def user_stock_prices():
+    """ Функция возвращает курс на акции пользователя"""
+    user_settings = get_user_settings()
+    user_stocks = user_settings["user_stocks"]
+    stock_prices = []
+    for stock in user_stocks:
+        prices = get_api_stocks(stock)
+        rounded_price = round(float(prices["price"]), 2)    # Преобразуем в float и округляем
+        stock_prices.append({"stock": stock, "price": rounded_price})
+    return stock_prices
+
+
 if __name__ == '__main__':
     # print(get_greetings())
     # print(get_cards())
-    print(get_top_five_max_prices())
+    # print(get_top_five_max_prices())
+    # print(get_user_settings())
+    # print(get_api_currency("EUR"))
+    # print(currency_rates())
+    # print(get_api_stocks("TSLA"))
+    print(user_stock_prices())
