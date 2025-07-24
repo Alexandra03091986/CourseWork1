@@ -12,7 +12,8 @@ load_dotenv()
 
 
 def get_greetings() -> str:
-    """ Приветствие в формате "???", где ??? — «Доброе утро» / «Добрый день» / «Добрый вечер» / «Доброй ночи» в
+    """ Возвращает приветствие с учётом времени.
+     — «Доброе утро» / «Добрый день» / «Добрый вечер» / «Доброй ночи» в
     зависимости от текущего времени."""
     now = int(datetime.now().strftime('%H'))
     if 6 <= now < 10:
@@ -26,21 +27,35 @@ def get_greetings() -> str:
 
 
 def get_cards(path=PATH_XLSX):
-    """ По каждой карте: последние 4 цифры карты; общая сумма расходов; кешбэк (1 рубль на каждые 100 рублей)."""
+    """ Функция открывает переданный путь """
     df = pd.read_excel(path)
-    filter_df = df[df["Сумма операции"] < 0]
+    # list_df = df.to_dict("records")
+    return df
+
+def get_cards_info(transactions_df: pd.DataFrame):
+    """ По каждой карте:
+     {
+     "last_digits": "последние 4 цифры карты",
+      "total_spent": общая сумма расходов,
+      "cashback": кешбэк (1 рубль на каждые 100 рублей)
+      }"""
+
+    filter_df = transactions_df[transactions_df["Сумма операции"] < 0]
     sum_group = filter_df.groupby("Номер карты")["Сумма операции"].sum()
     list_sum_group = sum_group.to_dict()
     result = []
     for k, v in list_sum_group.items():
-        result.append({"last_digits": k[1:], "total_spent": v * (-1), "cashback": round(v / 100 * (-1), 2)})
+        result.append({
+            "last_digits": str(k)[-4:],
+            "total_spent": abs(v),
+            "cashback": round(abs(v) / 100, 2)})
     return result
 
 
-def get_top_five_max_prices(path=PATH_XLSX):
+def get_top_five_max_prices(transactions_df):
     """ Топ-5 транзакций по сумме платежа. """
-    df = pd.read_excel(path)
-    top_five = df.sort_values("Сумма платежа").head()
+
+    top_five = transactions_df.sort_values("Сумма платежа").head()
     top_transactions = top_five.to_dict("records")
 
     top_result = []
@@ -55,9 +70,9 @@ def get_top_five_max_prices(path=PATH_XLSX):
                             # json.dumps(top_result, indent=4, ensure_ascii=False)
 
 
-def get_user_settings() -> dict:
+def get_user_settings(path) -> dict:
     """ Функция чтения пользовательских настроек."""
-    with open(USER_SETTINGS, "r", encoding="utf-8") as file:
+    with open(path, "r", encoding="utf-8") as file:
         settings = json.load(file)
         return settings
 
@@ -83,10 +98,10 @@ def get_api_stocks(stocks):
     return data
 
 
-def user_currency_rates():
+def get_currency_rates(user_currencies):
     """ Функция возвращает курс валют."""
-    user_settings = get_user_settings()
-    user_currencies = user_settings["user_currencies"]
+    # user_settings = get_user_settings()
+    # user_currencies = user_settings["user_currencies"]
     currency_rates = []        # валюта в реальном времени
     for currency in user_currencies:
         rates = get_api_currency(currency)
@@ -94,10 +109,10 @@ def user_currency_rates():
     return currency_rates
 
 
-def user_stock_prices():
-    """ Функция возвращает курс на акции пользователя"""
-    user_settings = get_user_settings()
-    user_stocks = user_settings["user_stocks"]
+def get_stock_prices(user_stocks):
+    """ Функция возвращает курс акций пользователя"""
+    # user_settings = get_user_settings()
+    # user_stocks = user_settings["user_stocks"]
     stock_prices = []
     for stock in user_stocks:
         prices = get_api_stocks(stock)
@@ -106,12 +121,14 @@ def user_stock_prices():
     return stock_prices
 
 
-if __name__ == '__main__':
+
+# if __name__ == '__main__':
     # print(get_greetings())
     # print(get_cards())
+    # print(get_cards_info())
     # print(get_top_five_max_prices())
     # print(get_user_settings())
     # print(get_api_currency("EUR"))
-    # print(currency_rates())
+    # print(get_currency_rates())
     # print(get_api_stocks("TSLA"))
-    print(user_stock_prices())
+    # print(get_stock_prices())
