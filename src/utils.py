@@ -41,6 +41,7 @@ def get_cards(path=PATH_XLSX) -> pd.DataFrame:
     # list_df = df.to_dict("records")
     return df
 
+
 def get_cards_info(transactions_df: pd.DataFrame) -> list:
     """ По каждой карте:
      {

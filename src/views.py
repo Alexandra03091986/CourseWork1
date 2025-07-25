@@ -27,7 +27,9 @@ def get_main_page_info(date: Any):
     logger.info("Загрузка данных по картам и транзакциям")
     all_transactions = get_cards(PATH_XLSX)
     logger.info(f"Всего транзакций загружено: {len(all_transactions)}")
-    end_period = datetime.strptime(date, "%d.%m.%Y %H:%M:%S")
+    # Преобразуем строку в объект datetime   YYYY-MM-DD HH:MM:SS
+    end_period = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+    logger.info(f"Преобразуем строку в объект datetime YYYY-MM-DD HH:MM:SS {end_period}")
     start_period = end_period.replace(day=1, hour=0, minute=0, second=0)
     logger.info(f"Анализируем период с {start_period} по {end_period}")
 
@@ -66,7 +68,7 @@ def get_main_page_info(date: Any):
         "stock_prices": stock_prices
     }
     logger.info("Отчет успешно сформирован")
-    return json.dumps(result, indent=4, ensure_ascii=False)
+    return json.dumps(result, indent=2, ensure_ascii=False)
 
 
 if __name__ == '__main__':

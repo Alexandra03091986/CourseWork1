@@ -1,10 +1,11 @@
 import json
 import re
+from typing import List, Dict, Any
 
 from logger import logger
 
 
-def get_simple_search(transactions, keyword):
+def get_simple_search(transactions: List[Dict[str, Any]], keyword: str) -> str:
     """
     Функция возвращает JSON со всеми транзакциями, которые:
     1. Относятся к указанной категории (keyword)
