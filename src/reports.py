@@ -79,8 +79,8 @@ def spending_by_category(transactions: pd.DataFrame,
     return selected_transactions
 
 
-if __name__ == '__main__':
-    all_transactions = get_cards(PATH_XLSX)
-    report_data = spending_by_category(all_transactions, "Дом и ремонт", "2021-11-25")
-    print(report_data)
+# if __name__ == '__main__':
+#     all_transactions = get_cards(PATH_XLSX)
+#     report_data = spending_by_category(all_transactions, "Дом и ремонт", "2021-11-25")
+#     print(report_data)
     # print(spending_by_category(all_transactions, "Дом и ремонт", "2021-11-25"))

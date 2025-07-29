@@ -71,5 +71,5 @@ def get_main_page_info(date: Any):
     return json.dumps(result, indent=2, ensure_ascii=False)
 
 
-if __name__ == '__main__':
-    print(get_main_page_info("11.01.2018 17:21:40"))
+# if __name__ == '__main__':
+#     print(get_main_page_info("11.01.2018 17:21:40"))

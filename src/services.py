@@ -2,7 +2,9 @@ import json
 import re
 from typing import List, Dict, Any
 
+from config import PATH_XLSX
 from logger import logger
+from src.utils import get_cards
 
 
 def get_search_for_transfers_to_individuals(transactions: List[Dict[str, Any]], keyword: str) -> str:
@@ -36,4 +38,6 @@ def get_search_for_transfers_to_individuals(transactions: List[Dict[str, Any]], 
     return json.dumps(filter_by_category, indent=2, ensure_ascii=False)
 
 # if __name__ == '__main__':
-#     print(get_search_for_transfers_to_individuals(PATH_XLSX, "Переводы"))
+#     all_transactions = get_cards(PATH_XLSX)
+#     transactions_for_service = all_transactions.to_dict("records")
+#     print(get_search_for_transfers_to_individuals(transactions_for_service, "Переводы"))
