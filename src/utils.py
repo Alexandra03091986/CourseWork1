@@ -73,7 +73,7 @@ def get_top_five_max_prices(transactions_df: pd.DataFrame) -> list:
     logger.info("Начало обработки топ-5 транзакций")
     logger.debug(f"Получено {len(transactions_df)} транзакций для анализа")
     logger.debug("Сортировка транзакций по сумме платежа")
-    top_five = transactions_df.sort_values("Сумма платежа").head()
+    top_five = transactions_df.sort_values("Сумма платежа", ascending=False).head()
     logger.debug("Отобрано топ-5 транзакций")
     top_transactions = top_five.to_dict("records")
 
