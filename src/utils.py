@@ -57,11 +57,13 @@ def get_cards_info(transactions_df: pd.DataFrame) -> list:
     list_sum_group = sum_group.to_dict()
     result = []
     for k, v in list_sum_group.items():
+        v = abs(v)
+        round_v = round(v / 100, 2)
         result.append({
             "last_digits": str(k)[-4:],
-            "total_spent": abs(v),
-            "cashback": round(abs(v) / 100, 2)})
-        logger.debug(f"Карта {str(k)[-4:]}: потрачено {abs(v)}, кешбэк {round(abs(v) / 100, 2)}")
+            "total_spent": v,
+            "cashback": round_v})
+        logger.debug(f"Карта {str(k)[-4:]}: потрачено {v}, кешбэк {round_v}")
     logger.info(f"Успешно обработано {len(result)} карт")
     return result
 
@@ -155,7 +157,6 @@ def get_stock_prices(user_stocks):
         logger.info(f"Успешно обработана акция {stock}: {rounded_price}")
     logger.info(f"Завершение обработки. Успешно обработано {len(stock_prices)}/{len(user_stocks)} акций")
     return stock_prices
-
 
 
 # if __name__ == '__main__':
