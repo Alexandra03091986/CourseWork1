@@ -5,7 +5,7 @@ from typing import List, Dict, Any
 from logger import logger
 
 
-def get_simple_search(transactions: List[Dict[str, Any]], keyword: str) -> str:
+def get_search_for_transfers_to_individuals(transactions: List[Dict[str, Any]], keyword: str) -> str:
     """
     Функция возвращает JSON со всеми транзакциями, которые:
     1. Относятся к указанной категории (keyword)
@@ -15,8 +15,6 @@ def get_simple_search(transactions: List[Dict[str, Any]], keyword: str) -> str:
         keyword: Ключевое слово для фильтрации категории
     """
 
-    # pd_transactions = pd.read_excel(transactions)
-    # list_transactions = pd_transactions.to_dict("records")
     logger.info(f"Начало фильтрации транзакций. Категория: '{keyword}'")
     logger.debug(f"Получено {len(transactions)} транзакций для обработки")
 
@@ -35,8 +33,7 @@ def get_simple_search(transactions: List[Dict[str, Any]], keyword: str) -> str:
     logger.info(f"Найдено {len(filter_by_category)} подходящих транзакций")
     logger.debug(f"Список отфильтрованных транзакций {json.dumps(filter_by_category, indent=2, ensure_ascii=False)}")
     logger.info(f"Фильтрация завершена успешно.")
-    # return filter_by_category
     return json.dumps(filter_by_category, indent=2, ensure_ascii=False)
 
 # if __name__ == '__main__':
-#     print(get_simple_search(PATH_XLSX, "Переводы"))
+#     print(get_search_for_transfers_to_individuals(PATH_XLSX, "Переводы"))
