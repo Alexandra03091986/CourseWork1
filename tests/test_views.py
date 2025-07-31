@@ -1,12 +1,11 @@
 import json
-from unittest.mock import patch, MagicMock
+from typing import Any, Dict, Iterator, List, Union
+from unittest.mock import MagicMock, patch
 
-from src.utils import get_greetings
-from src.views import get_main_page_info
 import pandas as pd
 import pytest
-import requests
-from datetime import datetime
+
+from src.views import get_main_page_info
 
 # Фиктивные данные для тестов
 MOCK_TRANSACTIONS = pd.DataFrame({
@@ -38,7 +37,7 @@ MOCK_STOCK_PRICES = [{"stock": "AAPL", "price": 150.25}]
 
 
 @pytest.fixture
-def mock_dependencies():
+def mock_dependencies() -> Iterator[MagicMock]:
     with patch('src.views.get_greetings', return_value="Добрый день"), \
          patch('src.views.get_cards', return_value=MOCK_TRANSACTIONS), \
          patch('src.views.get_cards_info', return_value=MOCK_CARDS_INFO), \
@@ -50,27 +49,31 @@ def mock_dependencies():
         yield mock_logger
 
 
-def test_date_parsing(mock_dependencies):
+def test_date_parsing(mock_dependencies: MagicMock) -> None:
     """Тест корректного преобразования даты"""
     result = get_main_page_info("2024-03-15 14:30:00")
-    mock_dependencies.info.assert_any_call("Преобразуем строку в объект datetime YYYY-MM-DD HH:MM:SS 2024-03-15 14:30:00")
+    # Проверяем что функция вернула результат
+    assert result is not None
+    mock_dependencies.info.assert_any_call(
+        "Преобразуем строку в объект datetime YYYY-MM-DD HH:MM:SS 2024-03-15 14:30:00"
+    )
 
 
-def test_invalid_date_format():
+def test_invalid_date_format() -> None:
     """Тест обработки некорректного формата даты"""
     with pytest.raises(ValueError):
         get_main_page_info("2024/03/15 14:30:00")
 
 
-def test_transaction_filtering(mock_dependencies):
+def test_transaction_filtering(mock_dependencies: MagicMock) -> None:
     """Тест фильтрации транзакций по дате"""
     get_main_page_info("2024-03-22 00:00:00")
     mock_dependencies.info.assert_any_call("Отфильтровано транзакций за период: 3")
 
 
-def test_json_structure(mock_dependencies):
+def test_json_structure(mock_dependencies: MagicMock) -> None:
     """Тест структуры возвращаемого JSON"""
-    result = json.loads(get_main_page_info("2024-03-15 14:30:00"))
+    result: Dict[str, Union[str, List[Dict[str, Any]]]] = json.loads(get_main_page_info("2024-03-15 14:30:00"))
 
     assert set(result.keys()) == {"greeting", "cards", "top_transactions", "currency_rates", "stock_prices"}
     assert isinstance(result["greeting"], str)
@@ -80,12 +83,12 @@ def test_json_structure(mock_dependencies):
     assert isinstance(result["stock_prices"], list)
 
 
-def test_logging_sequence(mock_dependencies):
+def test_logging_sequence(mock_dependencies: MagicMock) -> None:
     """Тест последовательности логирования"""
     get_main_page_info("2024-03-15 14:30:00")
 
     # Проверяем последовательность ключевых логов
-    log_calls = [call[0][0] for call in mock_dependencies.info.call_args_list]
+    log_calls: List[str] = [call[0][0] for call in mock_dependencies.info.call_args_list]
     assert "Запуск формирования отчета для даты: 2024-03-15 14:30:00" in log_calls
     assert "Загрузка данных по картам и транзакциям" in log_calls
     assert "Всего транзакций загружено:" in log_calls[3]

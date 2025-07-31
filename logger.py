@@ -4,7 +4,7 @@ import os
 from config import LOGS_DIR
 
 """ Настраиваем логгер """
-logger = logging.getLogger(__name__)    #"my_logger"
+logger = logging.getLogger(__name__)    # my_logger
 logger.setLevel(logging.DEBUG)
 
 log_file_path = os.path.join(LOGS_DIR, "app.log")

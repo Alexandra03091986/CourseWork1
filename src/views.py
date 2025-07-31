@@ -1,14 +1,16 @@
 import json
+from datetime import datetime
+from typing import Any
+
 import pandas as pd
 
-from typing import Any
-from datetime import datetime
 from config import PATH_XLSX, USER_SETTINGS
-from src.utils import get_greetings, get_cards, get_top_five_max_prices, get_cards_info, get_user_settings, \
-    get_currency_rates, get_stock_prices
 from logger import logger
+from src.utils import (get_cards, get_cards_info, get_currency_rates, get_greetings, get_stock_prices,
+                       get_top_five_max_prices, get_user_settings)
 
-def get_main_page_info(date: Any):
+
+def get_main_page_info(date: Any) -> str:
     """ Главную функцию, принимающую на вход строку с датой и временем в формате YYYY-MM-DD HH:MM:SS
      и возвращающую JSON-ответ со следующими данными:
      1. Приветствие
@@ -34,7 +36,10 @@ def get_main_page_info(date: Any):
     logger.info(f"Анализируем период с {start_period} по {end_period}")
 
     # Фильтрация транзакций
-    selected_transactions = all_transactions[(pd.to_datetime(all_transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S", dayfirst=True) >= start_period) & (pd.to_datetime(all_transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S", dayfirst=True) <= end_period)]
+    date_series = pd.to_datetime(all_transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S", dayfirst=True)
+    selected_transactions = all_transactions[
+        (date_series >= start_period) & (date_series <= end_period)
+    ]
     logger.info(f"Отфильтровано транзакций за период: {len(selected_transactions)}")
 
     # 3. Анализ карт

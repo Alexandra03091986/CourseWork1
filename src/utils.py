@@ -1,10 +1,10 @@
 import json
 import os
-import pandas as pd
-
-import requests
-
 from datetime import datetime
+from typing import Any, List
+
+import pandas as pd
+import requests
 from dotenv import load_dotenv
 
 from config import PATH_XLSX
@@ -38,7 +38,7 @@ def get_greetings() -> str:
         return "Доброй ночи"
 
 
-def get_cards(path=PATH_XLSX) -> pd.DataFrame:
+def get_cards(path: str = PATH_XLSX) -> pd.DataFrame:
     """ Функция загружает данные из Excel-файла и возвращает DataFrame"""
     logger.info(f"Загрузка данных из файла: {path}")
     df = pd.read_excel(path)
@@ -91,11 +91,12 @@ def get_top_five_max_prices(transactions_df: pd.DataFrame) -> list:
             "description": k.get("Описание")
         })
     logger.info(f"Успешно сформирован топ-5 транзакций (получено {len(top_result)} записей)")
-    return top_result       # красиво выведет в консоль если прописать так:
-                            # json.dumps(top_result, indent=4, ensure_ascii=False)
+    return top_result
+    # красиво выведет в консоль если прописать так:
+    # json.dumps(top_result, indent=4, ensure_ascii=False)
 
 
-def get_user_settings(path: str) -> dict:
+def get_user_settings(path: str) -> Any:
     """ Функция чтения пользовательских настроек из JSON-файла."""
     logger.info(f"Начало загрузки пользовательских настроек из файла: {path}")
     with open(path, "r", encoding="utf-8") as file:
@@ -104,7 +105,7 @@ def get_user_settings(path: str) -> dict:
         return settings
 
 
-def get_api_currency(currency: str) -> float:
+def get_api_currency(currency: str) -> Any:
     """Функция возвращает текущий курс валюты к RUB через API"""
     rate = "RUB"
     url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={rate}&base={currency}"
@@ -119,7 +120,7 @@ def get_api_currency(currency: str) -> float:
     return rates
 
 
-def get_api_stocks(stocks):
+def get_api_stocks(stocks: str) -> Any:
     """Функция возвращает текущий курс акции через API"""
     logger.info(f"Начало запроса для акции: {stocks}")
     api_key = os.getenv("API_KEY_FOR_STOCKS")
@@ -133,7 +134,7 @@ def get_api_stocks(stocks):
     return data
 
 
-def get_currency_rates(user_currencies):
+def get_currency_rates(user_currencies: List[str]) -> List:
     """ Функция возвращает курс валют."""
     # user_settings = get_user_settings()
     # user_currencies = user_settings["user_currencies"]
@@ -148,14 +149,14 @@ def get_currency_rates(user_currencies):
     return currency_rates
 
 
-def get_stock_prices(user_stocks):
+def get_stock_prices(user_stocks: List[str]) -> List:
     """ Функция возвращает курс акций пользователя"""
     # user_settings = get_user_settings()
     # user_stocks = user_settings["user_stocks"]
     logger.info(f"Начало обработки запроса акций. Количество акций: {len(user_stocks)}")
     stock_prices = []
     for stock in user_stocks:
-        logger.info(f"Обработка акции")
+        logger.info("Обработка акции")
         prices = get_api_stocks(stock)
         rounded_price = round(float(prices["price"]), 2)    # Преобразуем в float и округляем
         stock_prices.append({"stock": stock, "price": rounded_price})

@@ -1,11 +1,12 @@
 import json
-from unittest.mock import patch, Mock, mock_open
+from unittest.mock import Mock, mock_open, patch
 
 import pandas as pd
 import pytest
+from _pytest.logging import LogCaptureFixture
 
-from src.utils import get_greetings, get_cards, get_cards_info, get_top_five_max_prices, get_api_currency, \
-    get_api_stocks, get_user_settings, get_currency_rates, get_stock_prices
+from src.utils import (get_api_currency, get_api_stocks, get_cards, get_cards_info, get_currency_rates, get_greetings,
+                       get_stock_prices, get_top_five_max_prices, get_user_settings)
 
 
 @pytest.mark.parametrize("time_str, expected", [
@@ -18,7 +19,7 @@ from src.utils import get_greetings, get_cards, get_cards_info, get_top_five_max
     ("22", "Доброй ночи"),
     ("00", "Доброй ночи"),
 ])
-def test_get_greetings(time_str, expected):
+def test_get_greetings(time_str: str, expected: str) -> None:
     """ Тестирует приветствие с учётом времени """
     with patch("src.utils.datetime") as mock_datetime:
         mock_datetime.now.return_value.strftime.return_value = time_str
@@ -30,7 +31,12 @@ def test_get_greetings(time_str, expected):
     (12, "Добрый день", "Выбрано приветствие: Добрый день (10-18 часов)"),
     (20, "Добрый вечер", "Выбрано приветствие: Добрый вечер (18-22 часов)"),
 ])
-def test_get_greetings_logging(caplog, hour, expected_greeting, expected_log):
+def test_get_greetings_logging(
+        caplog: LogCaptureFixture,
+        hour: int,
+        expected_greeting: str,
+        expected_log: str
+) -> None:
     with patch("src.utils.datetime") as mock_datetime:
         mock_datetime.now.return_value.strftime.return_value = str(hour)
 
@@ -39,7 +45,7 @@ def test_get_greetings_logging(caplog, hour, expected_greeting, expected_log):
         assert expected_log in caplog.text
 
 
-def test_get_cards():
+def test_get_cards() -> None:
     """Тестирование функции get_cards"""
     test_data = pd.DataFrame({
         'card_id': [101, 102],
@@ -55,7 +61,7 @@ def test_get_cards():
     assert list(result.columns) == ['card_id', 'card_name'], "Неверные колонки"
 
 
-def test_get_cards_info():
+def test_get_cards_info() -> None:
     """Проверка основной логики функции"""
     test_data = pd.DataFrame({
         "Номер карты": ["1234567890123456", "9876543210987654", "1234567890123456"],
@@ -75,7 +81,7 @@ def test_get_cards_info():
     assert result[1]["cashback"] == 5.0
 
 
-def test_get_top_five_max_prices():
+def test_get_top_five_max_prices() -> None:
     """Проверяем сортировку по убыванию и выбор топ-5"""
     test_data = pd.DataFrame({
         "Дата операции": ["2023-01-01", "2023-01-02", "2023-01-03", "2023-01-04", "2023-01-05", "2023-01-06"],
@@ -94,7 +100,7 @@ def test_get_top_five_max_prices():
     assert result[4]["amount"] == 200
 
 
-def test_get_user_settings():
+def test_get_user_settings() -> None:
     # 1. Подготовка тестовых данных
     test_data = {"user_currencies": ["USD"], "user_stocks": ["AAPL"]}
     test_json = json.dumps(test_data)
@@ -117,14 +123,15 @@ def test_get_user_settings():
         # Проверяем что вернулись правильные данные
         assert result == test_data
 
-def test_get_currency_rates_success():
+
+def test_get_currency_rates_success() -> None:
     """Тест успешного получения курсов валют"""
     # 1. Подготовка тестовых данных
     test_currencies = ["USD", "EUR"]
     test_rates = {"USD": 75.5, "EUR": 80.1}
     # 2. Мокируем внешние зависимости
-    with  patch("src.utils.get_api_currency") as mock_api, \
-            patch("src.utils.logger") as mock_logger:
+    with (patch("src.utils.get_api_currency") as mock_api,
+          patch("src.utils.logger") as mock_logger):
 
         # Настраиваем мок API для возврата тестовых курсов
         mock_api.side_effect = lambda curr: test_rates[curr]
@@ -142,7 +149,7 @@ def test_get_currency_rates_success():
         mock_logger.info.assert_any_call("Обработка завершена. Успешно получено курсов: 2")
 
 
-def test_get_stock_prices():
+def test_get_stock_prices() -> None:
     """Тест успешного получения цен акций"""
     # 1. Подготовка тестовых данных
     test_stock = ["AAPL", "GOOGL"]
@@ -165,7 +172,7 @@ def test_get_stock_prices():
         mock_logger.info.assert_any_call("Завершение обработки. Успешно обработано 2/2 акций")
 
 
-def test_get_api_currency():
+def test_get_api_currency() -> None:
     """ Тест успешного получения курса валют"""
     test_data = {
         "rates": {"RUB": 75.50},
@@ -174,15 +181,15 @@ def test_get_api_currency():
     mock_responce = Mock()
     mock_responce.json.return_value = test_data
 
-    with patch("requests.get", return_value=mock_responce), \
-        patch.dict('os.environ', {'API_KEY_FOR_CURRENCY': 'test-key'}):
+    with (patch("requests.get", return_value=mock_responce),
+          patch.dict('os.environ', {'API_KEY_FOR_CURRENCY': 'test-key'})):
 
         result = get_api_currency("USD")
 
         assert result == 75.50
 
 
-def test_get_api_stocks():
+def test_get_api_stocks() -> None:
     """ Тест успешного получения данных об акции"""
     test_data = {
         "price": "150.25",
@@ -191,8 +198,8 @@ def test_get_api_stocks():
     mock_responce = Mock()
     mock_responce.json.return_value = test_data
 
-    with patch("requests.get", return_value=mock_responce), \
-        patch.dict('os.environ', {'API_KEY_FOR_CURRENCY': 'test-key'}):
+    with (patch("requests.get", return_value=mock_responce),
+          patch.dict('os.environ', {'API_KEY_FOR_CURRENCY': 'test-key'})):
 
         result = get_api_stocks("AAPL")
 

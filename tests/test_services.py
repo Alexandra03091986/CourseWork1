@@ -1,5 +1,5 @@
 import json
-from typing import List, Dict, Any
+from typing import Any, Dict, Hashable, List
 
 import pytest
 
@@ -15,13 +15,13 @@ def sample_transactions() -> List[Dict[str, Any]]:
     ]
 
 
-def test_get_search_for_transfers_to_individuals_no_category(sample_transactions):
+def test_get_search_for_transfers_to_individuals_no_category(sample_transactions: List[Dict[Hashable, Any]]) -> None:
     """Проверяет случай, когда нет подходящей категории."""
     result = get_search_for_transfers_to_individuals(sample_transactions, "Мебель")
     assert json.loads(result) == []
 
 
-def test_case_insensitivity(sample_transactions):
+def test_case_insensitivity(sample_transactions: List[Dict[Hashable, Any]]) -> None:
     """Проверяет регистронезависимость поиска имени, фильтрацию по категории"""
     found_transactions = get_search_for_transfers_to_individuals(sample_transactions, "Перевод")
     result = json.loads(found_transactions)
@@ -30,9 +30,9 @@ def test_case_insensitivity(sample_transactions):
     assert all("Перевод" in transaction["Категория"] for transaction in result)
 
 
-def test_invalid_name_format():
+def test_invalid_name_format() -> None:
     """Проверяет, что транзакции без 'Имя Ф.' не попадают в результат."""
-    transaction =  [{
+    transaction: List[Dict[Hashable, Any]] = [{
         "Категория": "Перевод",
         "Описание": "Без имени",
         "Сумма": 200
