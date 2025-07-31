@@ -1,10 +1,11 @@
-from unittest.mock import patch, Mock
+import json
+from unittest.mock import patch, Mock, mock_open
 
 import pandas as pd
 import pytest
 
 from src.utils import get_greetings, get_cards, get_cards_info, get_top_five_max_prices, get_api_currency, \
-    get_api_stocks
+    get_api_stocks, get_user_settings, get_currency_rates, get_stock_prices
 
 
 @pytest.mark.parametrize("time_str, expected", [
@@ -91,6 +92,77 @@ def test_get_top_five_max_prices():
     assert result[2]["amount"] == 500
     assert result[3]["amount"] == 300
     assert result[4]["amount"] == 200
+
+
+def test_get_user_settings():
+    # 1. Подготовка тестовых данных
+    test_data = {"user_currencies": ["USD"], "user_stocks": ["AAPL"]}
+    test_json = json.dumps(test_data)
+    test_path = "test_settings.json"
+    # 2. Мокируем открытие файла и logger
+    with patch("builtins.open", mock_open(read_data=test_json)) as mock_file, \
+            patch("src.utils.logger") as mock_logger:
+
+        # 3. Вызываем тестируемую функцию
+        result = get_user_settings(test_path)
+
+        # 4. Проверяем результаты
+        # Проверяем что файл открывался правильно
+        mock_file.assert_called_once_with(test_path, "r", encoding="utf-8")
+
+        # Проверяем что логировалось
+        mock_logger.info.assert_any_call(f"Начало загрузки пользовательских настроек из файла: {test_path}")
+        mock_logger.info.assert_any_call("Настройки успешно загружены.")
+
+        # Проверяем что вернулись правильные данные
+        assert result == test_data
+
+def test_get_currency_rates_success():
+    """Тест успешного получения курсов валют"""
+    # 1. Подготовка тестовых данных
+    test_currencies = ["USD", "EUR"]
+    test_rates = {"USD": 75.5, "EUR": 80.1}
+    # 2. Мокируем внешние зависимости
+    with  patch("src.utils.get_api_currency") as mock_api, \
+            patch("src.utils.logger") as mock_logger:
+
+        # Настраиваем мок API для возврата тестовых курсов
+        mock_api.side_effect = lambda curr: test_rates[curr]
+        # 3. Вызываем тестируемую функцию
+        result = get_currency_rates(test_currencies)
+        # 4. Проверяем результаты
+        assert len(result) == 2
+        assert result[0]["currency"] == "USD"
+        assert result[0]["rate"] == 75.5
+        assert result[1]["currency"] == "EUR"
+        assert result[1]["rate"] == 80.1
+
+        # Проверяем логирование
+        mock_logger.info.assert_any_call("Начало обработки запроса курса валют. Количество валют: 2")
+        mock_logger.info.assert_any_call("Обработка завершена. Успешно получено курсов: 2")
+
+
+def test_get_stock_prices():
+    """Тест успешного получения цен акций"""
+    # 1. Подготовка тестовых данных
+    test_stock = ["AAPL", "GOOGL"]
+    test_prices = {"AAPL": {"price": 150.25}, "GOOGL": {"price": 2800.50}}
+    #  2. Мокируем внешние зависимости
+    with patch("src.utils.get_api_stocks") as mock_api, \
+            patch("src.utils.logger") as mock_logger:
+        # Настраиваем мок API
+        mock_api.side_effect = lambda stock: test_prices[stock]
+        # 3. Вызываем тестируемую функцию
+        result = get_stock_prices(test_stock)
+        # 4. Проверяем результаты
+        assert len(result) == 2
+        assert result[0]["stock"] == "AAPL"
+        assert result[0]["price"] == 150.25
+        assert result[1]["stock"] == "GOOGL"
+        assert result[1]["price"] == 2800.50
+        # Проверяем логирование
+        mock_logger.info.assert_any_call("Начало обработки запроса акций. Количество акций: 2")
+        mock_logger.info.assert_any_call("Завершение обработки. Успешно обработано 2/2 акций")
 
 
 def test_get_api_currency():

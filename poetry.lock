@@ -301,6 +301,21 @@ files = [
 ]
 
 [[package]]
+name = "finnhub-python"
+version = "2.4.24"
+description = "Finnhub API"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "finnhub_python-2.4.24-py3-none-any.whl", hash = "sha256:beebd4c31d0792a4b30fb5d2c81176072fa8638a89dd152fc0676f507e594789"},
+    {file = "finnhub_python-2.4.24.tar.gz", hash = "sha256:cc505a344b8e73a7ba8174fe9646340493b028c94c6ad4bfe15ae9c078aa2458"},
+]
+
+[package.dependencies]
+requests = ">=2.22.0"
+
+[[package]]
 name = "flake8"
 version = "7.3.0"
 description = "the modular source code checker: pep8 pyflakes and co"
@@ -856,4 +871,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13"
-content-hash = "1b336e53708c9f120e1013d280b3c011785f4dbdbd61c15f6e89242111cdc328"
+content-hash = "e1de51ce22c81fb7e5f721019ecd0412c8526bac13c3b5402ec0bfe21db679ab"

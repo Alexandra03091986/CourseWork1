@@ -89,6 +89,7 @@ def test_spending_by_category_error_handling():
         assert len(result) == 0
         assert list(result.columns) == ["Дата операции", "Категория", "Сумма операции", "Описание"]
 
+
 def test_report_to_file_dataframe(tmp_path, sample_transactions):
     """Тест сохранения DataFrame через декоратор"""
     with patch('src.reports.PATH_DATA', tmp_path):

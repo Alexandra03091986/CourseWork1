@@ -1,62 +1,94 @@
 import json
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+
+from src.utils import get_greetings
 from src.views import get_main_page_info
 import pandas as pd
 import pytest
+import requests
 from datetime import datetime
 
+# Фиктивные данные для тестов
+MOCK_TRANSACTIONS = pd.DataFrame({
+    "Дата операции": ["01.03.2024 10:00:00", "15.03.2024 12:00:00", "20.03.2024 14:00:00"],
+    "Сумма платежа": [100, 500, 300],
+    "Номер карты": ["1111", "2222", "1111"]
+})
+
+MOCK_CARDS_INFO = [{
+    "last_digits": "1111",
+    "total_spent": 400,
+    "cashback": 4.0
+}]
+
+MOCK_TOP_FIVE = [{
+    "date": "15.03.2024 12:00:00",
+    "amount": 500,
+    "category": "Транспорт",
+    "description": "Такси"
+}]
+
+MOCK_USER_SETTINGS = {
+    "user_currencies": ["USD", "EUR"],
+    "user_stocks": ["AAPL", "GOOGL"]
+}
+
+MOCK_CURRENCY_RATES = [{"currency": "USD", "rate": 75.5}]
+MOCK_STOCK_PRICES = [{"stock": "AAPL", "price": 150.25}]
+
 
 @pytest.fixture
-def mock_transactions():
-    return pd.DataFrame({
-        "Дата операции": ["01.01.2023 12:00:00", "15.01.2023 14:00:00", "20.01.2023 10:00:00"],
-        "Карта": ["1234", "1234", "5678"],
-        "Сумма операции": [100, 500, 1000],
-        "Валюта": ["RUB", "RUB", "USD"],
-        "Категория": ["Еда", "Транспорт", "Отели"]
-    })
-
-@pytest.fixture
-def mock_settings():
-    return {
-        "user_currencies": ["USD", "EUR"],
-        "user_stocks": ["AAPL", "GOOGL"]
-    }
+def mock_dependencies():
+    with patch('src.views.get_greetings', return_value="Добрый день"), \
+         patch('src.views.get_cards', return_value=MOCK_TRANSACTIONS), \
+         patch('src.views.get_cards_info', return_value=MOCK_CARDS_INFO), \
+         patch('src.views.get_top_five_max_prices', return_value=MOCK_TOP_FIVE), \
+         patch('src.views.get_user_settings', return_value=MOCK_USER_SETTINGS), \
+         patch('src.views.get_currency_rates', return_value=MOCK_CURRENCY_RATES), \
+         patch('src.views.get_stock_prices', return_value=MOCK_STOCK_PRICES), \
+         patch('src.views.logger') as mock_logger:
+        yield mock_logger
 
 
-def test_main_page_info_structure(mock_transactions, mock_settings):
-    """Тест основной функции формирования отчета"""
-    with patch('src.utils.get_greetings', return_value="Добрый день"), \
-        patch('src.utils.get_cards', return_value=mock_transactions), \
-        patch('src.utils.get_user_settings', return_value=mock_settings), \
-        patch('src.utils.get_currency_rates', return_value={"USD": 82.1, "EUR": 94.66}), \
-        patch('src.utils.get_stock_prices', return_value={"AAPL": 150.0, "GOOGL": 2500.0}), \
-        patch('src.utils.get_top_five_max_prices') as mock_top_five, \
-        patch('src.utils.get_cards_info') as mock_cards_info, \
-        patch('src.utils.get_api_currency'), \
-        patch('src.utils.get_api_stocks'):
-
-        # Настраиваем моки для дополнительных функций
-        mock_top_five.return_value = [{"Дата операции": "15.01.2023", "Сумма": 500, "Категория": "Транспорт"}]
-        mock_cards_info.return_value = [{"card": "1234", "balance": 1000}]
-
-        # Вызываем тестируемую функцию
-        result_json = get_main_page_info("2023-01-15 12:00:00")
-        result = json.loads(result_json)
-
-        # Проверяем структуру ответа
-        assert "greeting" in result
-        assert "cards" in result
-        assert "top_transactions" in result
-        assert "currency_rates" in result
-        assert "stock_prices" in result
-
-        # Проверяем, что моки сработали
-        assert result["greeting"] == "Добрый день"
-        assert result["currency_rates"] == {"USD": 82.1, "EUR": 94.66}
-        assert result["stock_prices"] == {"AAPL": 150.0, "GOOGL": 2500.0}
-        assert len(result["top_transactions"]) == 1
-        assert len(result["cards"]) == 1
+def test_date_parsing(mock_dependencies):
+    """Тест корректного преобразования даты"""
+    result = get_main_page_info("2024-03-15 14:30:00")
+    mock_dependencies.info.assert_any_call("Преобразуем строку в объект datetime YYYY-MM-DD HH:MM:SS 2024-03-15 14:30:00")
 
 
+def test_invalid_date_format():
+    """Тест обработки некорректного формата даты"""
+    with pytest.raises(ValueError):
+        get_main_page_info("2024/03/15 14:30:00")
 
+
+def test_transaction_filtering(mock_dependencies):
+    """Тест фильтрации транзакций по дате"""
+    get_main_page_info("2024-03-22 00:00:00")
+    mock_dependencies.info.assert_any_call("Отфильтровано транзакций за период: 3")
+
+
+def test_json_structure(mock_dependencies):
+    """Тест структуры возвращаемого JSON"""
+    result = json.loads(get_main_page_info("2024-03-15 14:30:00"))
+
+    assert set(result.keys()) == {"greeting", "cards", "top_transactions", "currency_rates", "stock_prices"}
+    assert isinstance(result["greeting"], str)
+    assert isinstance(result["cards"], list)
+    assert isinstance(result["top_transactions"], list)
+    assert isinstance(result["currency_rates"], list)
+    assert isinstance(result["stock_prices"], list)
+
+
+def test_logging_sequence(mock_dependencies):
+    """Тест последовательности логирования"""
+    get_main_page_info("2024-03-15 14:30:00")
+
+    # Проверяем последовательность ключевых логов
+    log_calls = [call[0][0] for call in mock_dependencies.info.call_args_list]
+    assert "Запуск формирования отчета для даты: 2024-03-15 14:30:00" in log_calls
+    assert "Загрузка данных по картам и транзакциям" in log_calls
+    assert "Всего транзакций загружено:" in log_calls[3]
+    assert "Сформирован топ-5 транзакций." in log_calls
+    assert "Загрузка финансовых данных" in log_calls
+    assert "Отчет успешно сформирован" in log_calls[-1]

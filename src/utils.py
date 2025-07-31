@@ -3,14 +3,19 @@ import os
 import pandas as pd
 
 import requests
+
 from datetime import datetime
 from dotenv import load_dotenv
+
 from config import PATH_XLSX
 from logger import logger
 
-
 # Загружаем переменные из .env
 load_dotenv()
+
+# api_key = os.getenv("FINNHUB_KEY")
+# finnhub_client = finnhub.Client(api_key=api_key)
+# API_KEY_FOR_STOCKS = os.getenv("FINNHUB_KEY")
 
 
 def get_greetings() -> str:
@@ -160,13 +165,13 @@ def get_stock_prices(user_stocks):
 
 
 # if __name__ == '__main__':
-    # print(get_greetings())
-    # print(get_cards())
+#     # print(get_greetings())
+#     print(get_cards())
     # print(get_cards_info())
     # all_transactions = get_cards(PATH_XLSX)
     # print(get_top_five_max_prices(all_transactions))
     # print(get_user_settings())
     # print(get_api_currency("EUR"))
-    # print(get_currency_rates())
+    # print(get_currency_rate("USD", "RUB"))
     # print(get_api_stocks("TSLA"))
-    # print(get_stock_prices())
+    # print(get_stock_prices("TSLA"))
